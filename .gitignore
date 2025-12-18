@@ -12,3 +12,4 @@ clean_data/sentiment/
 # clean_data/
 # *.csv
 # *.parquet
+data/ECON/CPS data/cps.dta

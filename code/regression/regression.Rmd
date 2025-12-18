@@ -1,0 +1,75 @@
+---
+title: "Untitled"
+author: "Chengyi Shou"
+date: "2025-12-08"
+output: html_document
+---
+
+
+```{r}
+library(readxl)
+library(dplyr)
+library(lubridate)
+library(ggplot2)
+library(broom)
+
+# 1. Read your Excel file --------------------------------------
+df <- read_excel("C:/Users/15655/Desktop/data.xlsx") %>%   # change path if needed
+  mutate(
+    date       = as.Date(date),
+    ln_wage    = log(wage),         # log transforms for interpretation
+    ln_employee = log(employee),
+    ln_nyphci  = log(NYPHCI)
+  )
+
+# Quick check
+glimpse(df)
+
+# 2. Line plot of CPS immigration proxy ------------------------
+p <- ggplot(df, aes(x = date, y = p_immi)) +
+  geom_line() +
+  labs(
+    title = "Non-citizen share (CPS) in New York, 2020–2025",
+    x = "Month",
+    y = "Share of non-citizens (p_immi)"
+  ) +
+  theme_minimal()
+
+ggsave("C:/Users/15655/Desktop/non_citizen_share.png", plot = p,
+       width = 8, height = 4, dpi = 300)
+
+
+
+```
+
+```{r}
+m_ur <- lm(
+  NYUR ~ p_immi + ln_nyphci + COVID,
+  data = df
+)
+
+summary(m_ur)
+tidy(m_ur)
+
+```
+```{r}
+m_wage <- lm(
+  ln_wage ~ p_immi + NYUR + ln_nyphci + COVID,
+  data = df
+)
+
+summary(m_wage)
+tidy(m_wage)
+
+
+```
+```{r}
+m_emp <- lm(
+  ln_employee ~ p_immi + ln_nyphci + COVID,
+  data = df
+)
+
+summary(m_emp)
+tidy(m_emp)
+
+```

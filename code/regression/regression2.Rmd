@@ -1,0 +1,163 @@
+---
+title: "Untitled"
+author: "Chengyi Shou"
+date: "2025-12-08"
+output: html_document
+---
+
+
+```{r}
+# -------------------------------------------------------------
+# 1. Read data and construct NegAll / HateAll
+# -------------------------------------------------------------
+library(dplyr)
+
+# Read your monthly data
+df <- read.csv("C:/Users/15655/Desktop/regression2.csv")
+
+ls(df)
+# If month is a string, you can convert it to Date (optional)
+# df$month <- as.Date(df$month)
+
+# Construct NegAll_t and HateAll_t
+# NegAll_t = ImmigrationMeanShare_t * neg_share_t
+# HateAll_t = ImmigrationMeanShare_t * hate_share_t
+df <- df %>%
+  mutate(
+    NegAll  = ImmigrationMeanShare * neg_share,
+    HateAll = ImmigrationMeanShare * hate_share
+  )
+
+# -------------------------------------------------------------
+# 2. z-score for NegAll and HateAll
+# -------------------------------------------------------------
+df <- df %>%
+  mutate(
+    z_NegAll  = as.numeric(scale(NegAll)),   # standardized NegAll
+    z_HateAll = as.numeric(scale(HateAll))   # standardized HateAll
+  )
+
+# -------------------------------------------------------------
+# 3. Build composite hostility indices with different weights
+# -------------------------------------------------------------
+df <- df %>%
+  mutate(
+    # (1) Equal weights: hate and normal negative count the same
+    Hostility_11 = (z_NegAll + z_HateAll) / 2,
+
+    # (2) Hate has double weight (recommended as main index)
+    #     1 unit of hate = 2 units of normal negative
+    Hostility_12 = (z_NegAll + 2 * z_HateAll) / 3,
+
+    # (3) Hate has triple weight (robustness check)
+    Hostility_13 = (z_NegAll + 3 * z_HateAll) / 4
+  )
+
+# Save the dataset with new indices
+write.csv(df,  "C:/Users/15655/Desktop/regression2_with_indices.csv", row.names = FALSE)
+
+
+
+
+```
+
+regression
+
+```{r}
+library(readxl)
+library(dplyr)
+library(lubridate)
+
+# 读入 + 构造 log + 只保留有敌意数据的月份
+df_h <- read_excel("C:/Users/15655/Desktop/data.xlsx") %>%
+  mutate(
+    date        = as.Date(date),
+    ln_wage     = log(wage),
+    ln_employee = log(employee),
+    ln_nyphci   = log(NYPHCI)
+  ) %>%
+  filter(!is.na(Hostility_11)) %>%   # 只保留 2021-01 ~ 2024-12
+  # 所有连续自变量做 mean-centering
+  mutate(
+    p_immi_c      = p_immi      - mean(p_immi,      na.rm = TRUE),
+    ln_emp_c      = ln_employee - mean(ln_employee, na.rm = TRUE),
+    ln_nyphci_c   = ln_nyphci   - mean(ln_nyphci,   na.rm = TRUE),
+    ln_wage_c     = ln_wage     - mean(ln_wage,     na.rm = TRUE)
+  )
+
+## (1) Baseline：主效应
+m_base <- lm(Hostility_11 ~ p_immi_c + ln_emp_c + ln_nyphci_c,
+             data = df_h)
+summary(m_base)
+
+## (2) Interaction 1：移民 × 就业规模
+m_int_emp <- lm(Hostility_11 ~ p_immi_c * ln_emp_c + ln_nyphci_c,
+                data = df_h)
+summary(m_int_emp)
+
+## (3) Interaction 2：移民 × 工资
+m_int_wage <- lm(Hostility_11 ~ p_immi_c * ln_wage_c + ln_emp_c + ln_nyphci_c,
+                 data = df_h)
+summary(m_int_wage)
+
+
+
+
+```
+
+```{r}
+# 读入 + 构造 log + 只保留有敌意数据的月份
+df_h <- read_excel("C:/Users/15655/Desktop/data.xlsx") %>%
+  mutate(
+    date        = as.Date(date),
+    ln_wage     = log(wage),
+    ln_employee = log(employee),
+    ln_nyphci   = log(NYPHCI)
+  ) %>%
+  filter(!is.na(Hostility_11)) %>%   # 只保留 2021-01 ~ 2024-12
+  # 所有连续自变量做 mean-centering
+  mutate(
+    p_immi_c      = p_immi      - mean(p_immi,      na.rm = TRUE),
+    ln_emp_c      = ln_employee - mean(ln_employee, na.rm = TRUE),
+    ln_nyphci_c   = ln_nyphci   - mean(ln_nyphci,   na.rm = TRUE),
+    ln_wage_c     = ln_wage     - mean(ln_wage,     na.rm = TRUE)
+  )
+
+## (1) Baseline：主效应
+m_base <- lm(Hostility_12 ~ p_immi_c + ln_emp_c + ln_nyphci_c,
+             data = df_h)
+summary(m_base)
+
+## (2) Interaction 1：移民 × 就业规模
+m_int_emp <- lm(Hostility_12 ~ p_immi_c * ln_emp_c + ln_nyphci_c,
+                data = df_h)
+summary(m_int_emp)
+
+## (3) Interaction 2：移民 × 工资
+m_int_wage <- lm(Hostility_12 ~ p_immi_c * ln_wage_c + ln_emp_c + ln_nyphci_c,
+                 data = df_h)
+summary(m_int_wage)
+
+
+
+
+```
+
+```{r}
+## (1) Baseline：主效应
+m_base <- lm(Hostility_13 ~ p_immi_c + ln_emp_c + ln_nyphci_c,
+             data = df_h)
+summary(m_base)
+
+## (2) Interaction 1：移民 × 就业规模
+m_int_emp <- lm(Hostility_13 ~ p_immi_c * ln_emp_c + ln_nyphci_c,
+                data = df_h)
+summary(m_int_emp)
+
+## (3) Interaction 2：移民 × 工资
+m_int_wage <- lm(Hostility_13 ~ p_immi_c * ln_wage_c + ln_emp_c + ln_nyphci_c,
+                 data = df_h)
+summary(m_int_wage)
+
+
+```

@@ -1,0 +1,128 @@
+---
+title: "data"
+author: "Chengyi Shou"
+date: "2025-12-01"
+output: html_document
+---
+
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+library(tidyverse)
+library(writexl)
+library(haven)
+install.packages("writexl")
+
+cps <- read_dta("C:/Users/15655/Desktop/cps.dta")
+ls(cps)
+
+cps_m <- cps %>%
+  # 纽约州：statefip == 36
+  filter(statefip == 36) %>%
+  mutate(
+    foreign_born = (nativity == 4),
+    non_citizen  = (citizen  == 5)
+  ) %>%
+  group_by(year, month) %>%
+  summarise(
+    # 总人口（权重和）
+    pop_total   = sum(wtfinl, na.rm = TRUE),
+    # 外出生人数
+    fb_total    = sum(wtfinl[foreign_born], na.rm = TRUE),
+    # 外出生非公民人数（我们的非法移民 proxy）
+    fb_noncit   = sum(wtfinl[foreign_born & non_citizen], na.rm = TRUE),
+    # 外出生非公民占总人口比例
+    share_fb_noncit_pop = fb_noncit / pop_total,
+    # 外出生非公民在外出生人口中的比例（可选）
+    share_fb_noncit_fb  = fb_noncit / fb_total,
+    .groups = "drop"
+  ) %>%
+  # 生成一个真正的日期变量（方便后面 merge）
+  mutate(
+    date = make_date(year = year, month = month, day = 1)
+  ) %>%
+  filter(date >= as.Date("2020-01-01"),
+         date <= as.Date("2025-01-01")) %>%
+  arrange(date)
+
+# 看一下结果
+print(cps_m, n = 15)
+
+cps_n <- cps %>%
+  # 时间范围：2020–2025
+  filter(year >= 2020, year <= 2025) %>%
+  # 只要纽约州（FIPS 36）
+  filter(statefip == 36) %>%
+  # 把 haven_labelled 变量转成因子，方便用标签判断
+  mutate(
+    month      = as.integer(month),
+    nativity_f = as_factor(nativity),
+    citizen_f  = as_factor(citizen),
+    # 外出生：NATIVITY = 5 -> "Foreign born"
+    foreign_born = (nativity_f == "Foreign born"),
+    # 非公民：CITIZEN = 5 -> "Not a citizen"
+    non_citizen  = (citizen_f  == "Not a citizen")
+  ) %>%
+  group_by(year, month) %>%
+  summarise(
+    # 总人口（权重求和）
+    pop_total = sum(wtfinl, na.rm = TRUE),
+    # 外出生人口
+    fb_total  = sum(wtfinl[foreign_born], na.rm = TRUE),
+    # 外出生 + 非公民 = 我们的非法移民 proxy
+    fb_noncit = sum(wtfinl[foreign_born & non_citizen], na.rm = TRUE),
+    # 占总人口比例
+    share_fb_noncit_pop = fb_noncit / pop_total,
+    # 在外出生人口中的比例（可选）
+    share_fb_noncit_fb  = fb_noncit / fb_total,
+    .groups = "drop"
+  ) %>%
+  mutate(
+    date = make_date(year, month, 1)
+  ) %>%
+  # 精确筛到 2020-01 ~ 2025-01
+  filter(date >= as.Date("2020-01-01"),
+         date <= as.Date("2025-01-01")) %>%
+  arrange(date)
+
+cps_n %>% head()
+
+
+cps_s <- cps %>%
+  # 时间 & 地理筛选
+  filter(year >= 2020, year <= 2025,
+         statefip == 36) %>%          # 纽约州 FIPS=36
+  mutate(
+    month   = as.integer(month),
+    # 非公民：CITIZEN code 5 = "Not a citizen"
+    non_citizen = (citizen == 5)
+  ) %>%
+  group_by(year, month) %>%
+  summarise(
+    pop_total   = sum(wtfinl, na.rm = TRUE),                 # 总人口
+    noncit_tot  = sum(wtfinl[non_citizen], na.rm = TRUE),    # 非公民人数
+    share_noncit_pop = noncit_tot / pop_total,               # 非公民占比（我们的 proxy）
+    .groups = "drop"
+  ) %>%
+  mutate(
+    date = make_date(year, month, 1)
+  ) %>%
+  filter(date >= as.Date("2020-01-01"),
+         date <= as.Date("2025-01-01")) %>%
+  arrange(date)
+
+cps_s %>% head()
+
+
+write_xlsx(
+  cps_s,
+  path = "NY_CPS_noncitizen_share_monthly_2020_2025.xlsx"
+)
+
+```
+
