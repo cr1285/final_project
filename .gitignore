@@ -1,0 +1,14 @@
+# iCloud placeholder files
+*.icloud
+
+# Sentiment data outputs (local only)
+clean_data/sentiment/
+
+# Jupyter
+.ipynb_checkpoints/
+**/.ipynb_checkpoints/
+
+# Data (optional — only if you don't want to push large data)
+# clean_data/
+# *.csv
+# *.parquet
