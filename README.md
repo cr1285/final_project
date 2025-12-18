@@ -1,6 +1,4 @@
 
----
-
 # Economic Conditions and Online Hostility Toward Immigrants
 
 **Final Project – Data Science**
@@ -9,7 +7,7 @@
 
 ### Title
 
-**Effect of the Economy on Sentiment About Immigration: a case study using data from NY state**
+**Economic Conditions and Online Hostility Toward Immigrants: Evidence from Congressional YouTube Comments**
 
 ### Abstract
 
@@ -21,11 +19,69 @@ We then merge these indices with the New York economic panel and estimate a seri
 
 ---
 
-## 2. Inputs: data and raw files
+## 2. Repository structure
 
-### 2.1 Congressional and social-media metadata
+Top-level folders:
 
-**`df_reps_with_youtube.csv`**
+* `code/`
+
+  * `LDA/` – notebooks for topic modelling
+
+    * `LDA relevant.ipynb`
+  * `regression/` – R Markdown for regressions
+
+    * `regression.Rmd`, `regression.html`
+    * `regression2.Rmd`, `regression2.html`
+  * `sentiment/` – (if needed) helper functions for sentiment / hate analysis
+  * `analyzing_comments_new_env.ipynb` – scraping and cleaning YouTube comments
+  * `analyzing_immigraiton.ipynb` – immigration sentiment & hate analysis
+  * `final_project_creating_dataset.ipynb` – building congressional metadata
+
+* `data/`
+
+  * `ECON/`
+
+    * `CPS data/` – economic inputs
+
+      * `Unemployment.xlsx`, `all_employees.xlsx`, `monthly_wage.xlsx`,
+        `replace_GDP.xlsx`, `yearly_populationNY.xlsx`
+  * `regression/`
+
+    * `data.xlsx` – final merged monthly panel for regressions
+  * `sentiment/`
+
+    * `raw_data/` – raw comment-level files used in sentiment analysis
+    * `clean_data/` – cleaned / filtered sentiment datasets (e.g., immigration-only comments)
+
+* `figures/`
+
+  * `ECON/` – economic time-series figures
+
+    * `economic_graphs.docx`
+  * `LDA/` – topic-model figures
+
+    * `LDA graphs.docx`
+  * `sentiment/` – PNGs for sentiment & hate results
+
+    * `n_hate_over_time.png`, `n_negative_imm_com_over_time.png`,
+      `n_negative_over_time.png`, `party_share_anti_imm_comm.png`,
+      `volume_vs_hate_share.png`, etc.
+
+* `report/`
+
+  * `DS_report.pdf` – final project report
+  * `pre_slides.pdf` – presentation slides
+  * `proposal.docx` – original project proposal
+
+* `reference_materials/` – background papers and notes
+
+---
+
+## 3. Inputs: data and raw files
+
+### 3.1 Congressional and social-media metadata
+
+**`data/sentiment/raw_data/df_reps_with_youtube.csv`**
 Representative-level dataset used to identify which House members have YouTube channels and to attach political characteristics to each channel. One row per member of Congress.
 
 Key variables:
@@ -44,14 +100,14 @@ Key variables:
 
 Supporting raw files (only used inside scripts, not in the analysis directly):
 
-* `df_legs_media.csv`, `clean-df_legs_media.csv` – larger legislators–media datasets used to build the representative file
-* `legislators-current-demographics.yaml`, `legislators-social-media.yaml`, `reps__comittees.yaml` – public YAML files with congressional demographics and social-media handles
+* `reference_materials/df_legs_media.csv`, `reference_materials/clean-df_legs_media.csv` – larger legislators–media datasets used to build the representative file
+* `reference_materials/legislators-current-demographics.yaml`, `reference_materials/legislators-social-media.yaml`, `reference_materials/reps__comittees.yaml` – public YAML files with congressional demographics and social-media handles
 
 ---
 
-### 2.2 YouTube comments
+### 3.2 YouTube comments
 
-**`reps_yt_comments_2021_2025.csv`**
+**`data/sentiment/raw_data/reps_yt_comments_2021_2025.csv`**
 Comment-level dataset. One row = one YouTube comment on a video from an official House member’s channel (2021–2025).
 
 Main variables:
@@ -80,66 +136,66 @@ Additional variables created in the text-analysis pipeline (stored in intermedia
 * `sent_label`, `sent_score_raw`, `sent_score` – outputs from the sentiment model
 * `hate_label`, `hate_score_raw`, `is_hate`, `hate_score` – outputs from the hate / toxicity model
 
-Because the full immigration-comment file is large, it may not be stored directly in the repository; all scripts to reproduce it are included.
+Immigration-only and cleaned versions of these datasets are stored under `data/sentiment/clean_data/`.
 
 ---
 
-### 2.3 Economic data (New York)
+### 3.3 Economic data (New York)
 
-Economic inputs are stored in Excel files:
+Economic inputs are stored in:
 
+**`data/ECON/CPS data/`**
+
+* `Unemployment.xlsx` – monthly New York unemployment rate
 * `all_employees.xlsx` – monthly employment in New York
-* `Unemployment.xlsx` – state unemployment rate
 * `monthly_wage.xlsx` – average monthly wage
 * `replace_GDP.xlsx` – macro indicator used as a GDP proxy (New York Fed Coincident Index, NYPHCI)
 * `yearly_populationNY.xlsx` – annual New York population
-* `NY_CPS_noncitizen_share_monthly_2020_2025.xlsx` – monthly non-citizen share (main immigrant-share variable)
 
-> **Important:** the underlying CPS micro data file (`cps.dta`) is **not included** in the repository because it is too large and must be downloaded separately from the CPS / IPUMS source. The R code in `cps.Rmd` assumes that a local copy of the CPS micro data is available but does not push it to GitHub.
+**`data/ECON/CPS data/NY_CPS_noncitizen_share_monthly_2020_2025.xlsx`**
+Monthly non-citizen share (main immigrant-share variable) computed from CPS.
 
-CPS processing:
-
-* `cps.Rmd` / `cps-data.html` – R code and HTML output used to compute the New York non-citizen share and export it to Excel. The script reads a local CPS micro data file (e.g., `cps.dta`) that each user must obtain independently.
+> **Important:** the underlying CPS micro data file (`cps.dta`) is **not included** in the repository because it is too large and must be downloaded separately from the CPS / IPUMS source. The R code in `code/regression/cps.Rmd` assumes that a local copy of the CPS micro data is available but does not push it to GitHub.
 
 Merged analysis dataset:
 
-* `data.xlsx` – monthly panel for New York containing immigrant share, employment, unemployment, wages, NYPHCI, COVID indicator, and the final hostility indices used in the regressions
+* `data/regression/data.xlsx` – monthly panel for New York containing immigrant share, employment, unemployment, wages, NYPHCI, COVID indicator, and the final hostility indices used in the regressions
 
 ---
 
-### 2.4 Other files
+### 3.4 Other files
 
-* `pre_slides.pdf`, `proposal.docx` – project proposal and early slides
-* `economic_graphs.docx`, `LDA graphs.docx` – collections of intermediate figures (economic time series, topic salience, hostility indices)
-* `reference list.docx` and multiple PDF articles (`borjas-2017.pdf`, `immigration.pdf`, `populism.pdf`, etc.) – background readings, not used directly in the code
+* `report/pre_slides.pdf`, `report/proposal.docx` – project proposal and early slides
+* `figures/ECON/economic_graphs.docx`, `figures/LDA/LDA graphs.docx` – collections of intermediate figures (economic time series, topic salience, hostility indices)
+* `reference_materials/*` – background readings and notes, not used directly in the code
 * System / housekeeping files: `.gitignore`, `.DS_Store`, and `*-checkpoint.ipynb` / `*-checkpoint.csv` can be ignored
 
 ---
 
-## 3. Code: what each script / notebook does
+## 4. Code: what each script / notebook does
 
-### 3.1 Data construction and scraping
+### 4.1 Data construction and scraping
 
-**`final_project_creating_dataset.ipynb`**
+**`code/final_project_creating_dataset.ipynb`**
 
-* Reads congressional YAML files and `df_legs_media.csv`
-* Cleans and merges metadata to create `df_reps_with_youtube.csv`
+* Reads congressional YAML files and `df_legs_media.csv` from `reference_materials/`
+* Cleans and merges metadata to create `data/sentiment/raw_data/df_reps_with_youtube.csv`
 * Standardizes YouTube channel IDs and constructs `youtube_url`
 
-**`analyzing_comments_new_environment.ipynb`**
+**`code/analyzing_comments_new_env.ipynb`**
 
 * Uses `df_reps_with_youtube.csv` and a local YouTube API key (not stored in the repo)
 * Scrapes top-level comments from each representative’s channel for 2021–2025
 * Parses timestamps, constructs `month`, flags replies vs. top-level comments
-* Saves `reps_yt_comments_2021_2025.csv`
+* Saves `data/sentiment/raw_data/reps_yt_comments_2021_2025.csv`
 
 ---
 
-### 3.2 Topic modelling (LDA)
+### 4.2 Topic modelling (LDA)
 
-**`LDA relevant.ipynb`**
+**`code/LDA/LDA relevant.ipynb`**
 
-* Loads `reps_yt_comments_2021_2025.csv`
+* Loads `data/sentiment/raw_data/reps_yt_comments_2021_2025.csv`
 
 * Cleans text using NLTK:
 
@@ -175,13 +231,13 @@ Merged analysis dataset:
   * **ImmigrationMainShare** – share of comments whose main topic is immigration
   * **ImmigrationProbMean** – mean immigration topic probability across all comments
 
-* Exports topic-related figures (bar plot of main topics, immigration salience over time, comparison of immigration vs. other big topics) and intermediate CSVs used in downstream analysis
+* Writes intermediate CSVs to `data/sentiment/clean_data/` and exports topic-related figures to `figures/LDA/`.
 
 ---
 
-### 3.3 Sentiment and hate models (Hugging Face)
+### 4.3 Sentiment and hate models (Hugging Face)
 
-**`analyzing_immigraiton.ipynb`**
+**`code/analyzing_immigraiton.ipynb`**
 
 * Loads LDA outputs and identifies **immigration-focused comments**:
 
@@ -210,23 +266,25 @@ Merged analysis dataset:
   * conditional vs. unconditional shares (e.g., share of **all** comments that are both immigration-related and negative / hateful)
   * builds and visualizes monthly hostility time series (NegAll, HateAll, and composite indices)
 
-* Saves exploratory figures such as:
+* Saves exploratory figures to `figures/sentiment/`, including:
 
-  * `n_negative_imm_com_over_time.png` – negative immigration comments over time
-  * `n_hate_over_time.png` – hateful immigration comments over time
-  * party-level plots of hostility and comment volume
+  * `n_negative_imm_com_over_time.png`
+  * `n_hate_over_time.png`
+  * `n_negative_over_time.png`
+  * `party_share_anti_imm_comm.png`
+  * `volume_vs_hate_share.png`
 
 ---
 
-### 3.4 Hostility indices and regressions
+### 4.4 Hostility indices and regressions
 
-**`regression.Rmd` and `regression2.Rmd`**
+**`code/regression/regression.Rmd` and `code/regression/regression2.Rmd`**
 
 * Read:
 
-  * monthly immigration topic measures from `LDA relevant.ipynb` (ImmigrationMainShare, ImmigrationProbMean)
-  * monthly sentiment / hate aggregates from `analyzing_immigraiton.ipynb` (NegShare, HateShare)
-  * New York economic panel from `data.xlsx`
+  * monthly immigration topic measures from `data/sentiment/clean_data/` (ImmigrationMainShare, ImmigrationProbMean)
+  * monthly sentiment / hate aggregates from `data/sentiment/clean_data/` (NegShare, HateShare)
+  * New York economic panel from `data/regression/data.xlsx`
 
 * Construct monthly hostility indices:
 
@@ -255,96 +313,90 @@ Merged analysis dataset:
      * regressors: non-citizen share, log employment, log NYPHCI, COVID dummy
      * robustness checks with alternative hostility indices and salience measures
 
-* Produce regression tables and HTML output (`regression.html`, `regression2.html`) used in the final report
+* Produce regression tables and HTML output (`code/regression/regression.html`, `code/regression/regression2.html`) used in the final report
 
 ---
 
-### 3.5 CPS processing
+### 4.5 CPS processing
 
-**`cps.Rmd`**
+**`code/regression/cps.Rmd`**  (if present)
 
 * Processes CPS micro data from a **local file** (e.g., `cps.dta`) which is **not included in the repository** due to its size and licensing constraints.
 * Restricts to New York State and relevant years
 * Computes monthly non-citizen share for New York
-* Exports `NY_CPS_noncitizen_share_monthly_2020_2025.xlsx` and an HTML summary (`cps-data.html`)
+* Exports `data/ECON/CPS data/NY_CPS_noncitizen_share_monthly_2020_2025.xlsx` and an HTML summary (`cps-data.html`)
 
 To reproduce this part, each user must download CPS micro data separately (for example from IPUMS CPS), save it locally as `cps.dta` (or adjust the path in `cps.Rmd`), and then knit the R Markdown file.
 
 ---
 
-## 4. Main outputs
+## 5. Main outputs
 
-### 4.1 Cleaned datasets
+### 5.1 Cleaned datasets
 
-* `df_reps_with_youtube.csv` – cleaned representative-level metadata
-* `reps_yt_comments_2021_2025.csv` – cleaned comment-level dataset
-* `NY_CPS_noncitizen_share_monthly_2020_2025.xlsx` – immigration share series for New York (derived from local CPS micro data, not pushed)
-* `data.xlsx` – final merged monthly panel used in regressions (economic variables + hostility indices)
+* `data/sentiment/raw_data/df_reps_with_youtube.csv` – cleaned representative-level metadata
+* `data/sentiment/raw_data/reps_yt_comments_2021_2025.csv` – cleaned comment-level dataset
+* `data/ECON/CPS data/NY_CPS_noncitizen_share_monthly_2020_2025.xlsx` – immigration share series for New York (derived from local CPS micro data, not pushed)
+* `data/regression/data.xlsx` – final merged monthly panel used in regressions (economic variables + hostility indices)
 
-Intermediate derived files (may be created inside notebooks):
+Intermediate derived files (created inside notebooks, mostly under `data/sentiment/clean_data/`):
 
 * topic-level CSVs (e.g., monthly topic shares, immigration salience series)
 * monthly immigration sentiment / hate aggregates
 
 ---
 
-### 4.2 Figures
+### 5.2 Figures
 
-Saved PNG images (and figures embedded in the report), including:
+Saved figures live in `figures/`:
 
-* **Economic graphs** (from `economic_graphs.docx`): unemployment, log wages, log employment, NYPHCI, and non-citizen share over time
+* `figures/ECON/economic_graphs.docx` – economic time-series figures
+* `figures/LDA/LDA graphs.docx` – topic-model figures
+* `figures/sentiment/*.png` – sentiment & hate graphs, including:
 
-* **Topic-model figures** (from `LDA graphs.docx`):
-
-  * overall distribution of main topics
-  * monthly immigration salience (ImmigrationMainShare and ImmigrationProbMean)
-  * comparison of immigration vs. other major topics over time
-
-* **Sentiment and hate figures**:
-
-  * `n_negative_imm_com_over_time.png` – negative immigration comments over time
-  * `n_hate_over_time.png` – hateful immigration comments over time
-  * `volume_vs_hate_share.png` – comment volume vs. hate share
-  * party-level comparisons of hostility and comment volume
+  * `n_negative_imm_com_over_time.png`
+  * `n_hate_over_time.png`
+  * `n_negative_over_time.png`
+  * `party_share_anti_imm_comm.png`
+  * `volume_vs_hate_share.png`
 
 ---
 
-### 4.3 Regression results and documentation
+### 5.3 Report and documentation
 
-* `regression.html`, `regression2.html` – detailed regression outputs (coefficients, standard errors, goodness-of-fit)
-* `economic_graphs.docx`, `LDA graphs.docx` – figure collections used in the final paper
-* Final paper (`DS report.docx` / PDF) – narrative discussion of data, methods, and results
+* `report/DS_report.pdf` – final project report
+* `report/pre_slides.pdf` – presentation slides
+* `code/regression/regression.html`, `code/regression/regression2.html` – detailed regression outputs
 
 ---
 
-## 5. Reproducibility: recommended run order
+## 6. Reproducibility: recommended run order
 
 To reproduce the main results (assuming access to a YouTube API key and CPS micro data):
 
 1. **Build congressional metadata**
 
-   * Run `final_project_creating_dataset.ipynb` to create `df_reps_with_youtube.csv`.
+   * Run `code/final_project_creating_dataset.ipynb` to create `data/sentiment/raw_data/df_reps_with_youtube.csv`.
 
 2. **Scrape YouTube comments**
 
-   * Run `analyzing_comments_new_environment.ipynb` (requires a valid YouTube API key) to create `reps_yt_comments_2021_2025.csv`.
+   * Run `code/analyzing_comments_new_env.ipynb` (requires a valid YouTube API key) to create `data/sentiment/raw_data/reps_yt_comments_2021_2025.csv`.
 
 3. **Topic modelling**
 
-   * Run `LDA relevant.ipynb` to build the dictionary and corpus, fit the 20-topic LDA model, label topics, identify the immigration topic (topic 0), and export monthly topic-share and immigration-salience series.
+   * Run `code/LDA/LDA relevant.ipynb` to build the dictionary and corpus, fit the 20-topic LDA model, label topics, identify the immigration topic (topic 0), and export monthly topic-share and immigration-salience series to `data/sentiment/clean_data/` and `figures/LDA/`.
 
 4. **Sentiment and hate analysis**
 
-   * Run `analyzing_immigraiton.ipynb` on the immigration-topic comments to obtain monthly NegShare, HateShare, and other intermediate measures.
+   * Run `code/analyzing_immigraiton.ipynb` on the immigration-topic comments to obtain monthly NegShare, HateShare, and other intermediate measures and save them under `data/sentiment/clean_data/` and `figures/sentiment/`.
 
 5. **CPS processing (requires external CPS data)**
 
-   * Download CPS micro data (e.g., from IPUMS CPS) and save it locally as `cps.dta` (or adjust the path in `cps.Rmd`).
-   * Run `cps.Rmd` to compute the monthly New York non-citizen share and export `NY_CPS_noncitizen_share_monthly_2020_2025.xlsx`.
+   * Download CPS micro data (e.g., from IPUMS CPS) and save it locally as `cps.dta` (or adjust the path in `code/regression/cps.Rmd`).
+   * Run `code/regression/cps.Rmd` to compute the monthly New York non-citizen share and export `data/ECON/CPS data/NY_CPS_noncitizen_share_monthly_2020_2025.xlsx`.
 
 6. **Merge data and run regressions**
 
-   * Run `regression.Rmd` / `regression2.Rmd` to construct hostility indices, merge them with the New York economic panel (`data.xlsx`), and estimate the Stage 1 and Stage 2 regression models.
+   * Run `code/regression/regression.Rmd` / `code/regression/regression2.Rmd` to construct hostility indices, merge them with the New York economic panel (`data/regression/data.xlsx`), and estimate the Stage 1 and Stage 2 regression models.
 
----
 
